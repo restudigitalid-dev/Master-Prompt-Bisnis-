@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perpustakaan Ribuan Prompt</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons (React Version) -->
+    <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.min.js"></script>
+
+    <!-- Tailwind Config for Custom Colors/Fonts -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gem: {
+                            900: '#0f172a', // Slate 900
+                            800: '#1e293b',
+                            gold: '#fbbf24', // Amber 400
+                            darkGold: '#b45309'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.4s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #475569; 
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.7);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 dark:bg-slate-950 dark:text-gray-100 transition-colors duration-300 min-h-screen">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { 
+            BrainCircuit, Search, ChevronLeft, Copy, Eye, 
+            Star, Moon, Sun, Filter, Lock, Zap, BookOpen 
+        } = lucideReact;
+
+        // ==========================================
+        // CONFIGURATION & DATA
+        // ==========================================
+
+        const NICHES = [
+            { id: 'business', title: 'Prompt Bisnis', desc: 'Strategi, Marketing, & Startup', color: 'from-blue-500 to-indigo-600', icon: '💼' },
+            { id: 'career', title: 'Prompt Career', desc: 'CV, Interview, & Promosi', color: 'from-teal-400 to-emerald-600', icon: '🚀' },
+            { id: 'creator', title: 'Content Creator', desc: 'Script, Youtube, & Tiktok', color: 'from-pink-500 to-rose-500', icon: '📹' },
+            { id: 'design', title: 'Prompt Design', desc: 'UI/UX, Grafis, & Art', color: 'from-purple-500 to-violet-600', icon: '🎨' },
+            { id: 'parenting', title: 'Prompt Parenting', desc: 'Edukasi & Psikologi Anak', color: 'from-orange-400 to-amber-500', icon: '👨‍👩‍👧' },
+            { id: 'finance', title: 'Prompt Finance', desc: 'Investasi & Budgeting', color: 'from-lime-500 to-green-600', icon: '💰' },
+            { id: 'health', title: 'Health & Mental', desc: 'Workout, Diet, & Mindfulness', color: 'from-cyan-400 to-sky-600', icon: '🧘' },
+            { id: 'relationship', title: 'Prompt Relationship', desc: 'Komunikasi & Sosial', color: 'from-red-500 to-rose-600', icon: '❤️' },
+            { id: 'sidehustle', title: 'Prompt Side Hustle', desc: 'Freelance & Passive Income', color: 'from-fuchsia-500 to-purple-600', icon: '💸' },
+            { id: 'language', title: 'Learning Language', desc: 'Polyglot & Grammar', color: 'from-indigo-500 to-blue-600', icon: '🗣️' },
+        ];
+
+        // >>> PASTE DATA BATCH 1-6 DI SINI <<<
+        // Format: { id: 1, nicheId: 'business', title: 'Judul', content: 'Isi Prompt...', category: 'Strategy', isGem: false }
+        
+        const INITIAL_DATA = [
+            // DUMMY DATA: 1 Contoh Per Niche + Hidden Gems
+            { id: 101, nicheId: 'business', title: 'Analisis SWOT Startup', content: 'Bertindaklah sebagai konsultan bisnis senior. Lakukan analisis SWOT mendalam untuk ide startup berikut: [Jelaskan Ide]. Berikan strategi mitigasi untuk setiap Weakness dan Threat.', category: 'Strategy', isGem: false },
+            { id: 201, nicheId: 'career', title: 'Optimasi Profil LinkedIn', content: 'Tulis ulang headline dan bagian "About" LinkedIn saya agar menarik bagi rekruter di industri [Industri Anda]. Gunakan kata kunci SEO yang relevan.', category: 'Personal Branding', isGem: false },
+            { id: 301, nicheId: 'creator', title: 'Ide Hook TikTok Viral', content: 'Buatkan 10 hook 3-detik pertama untuk video TikTok tentang [Topik]. Gunakan teknik psikologi curiosity gap.', category: 'Viral Marketing', isGem: false },
+            { id: 401, nicheId: 'design', title: 'Prompt Midjourney Logo', content: '/imagine prompt: minimalist vector logo of a [Object], flat design, golden ratio, vector style, white background --v 5', category: 'AI Art', isGem: false },
+            { id: 501, nicheId: 'parenting', title: 'Menjelaskan Konsep Sulit', content: 'Jelaskan konsep [Topik Sulit, misal: Inflasi] kepada anak usia 7 tahun menggunakan analogi mainan atau makanan.', category: 'Education', isGem: false },
+            { id: 601, nicheId: 'finance', title: 'Metode 50/30/20', content: 'Buatkan tabel perencanaan anggaran bulanan dengan gaji [Jumlah] menggunakan metode 50/30/20. Prioritaskan pelunasan hutang.', category: 'Budgeting', isGem: false },
+            { id: 701, nicheId: 'health', title: 'Menu Diet Seminggu', content: 'Buatkan rencana makan (meal plan) 7 hari yang tinggi protein, rendah gula, dan murah untuk mahasiswa. Sertakan daftar belanja.', category: 'Nutrition', isGem: false },
+            { id: 801, nicheId: 'relationship', title: 'Resolusi Konflik', content: 'Saya bertengkar dengan pasangan tentang [Masalah]. Berikan skrip komunikasi non-violent (NVC) untuk memulai percakapan damai.', category: 'Communication', isGem: false },
+            { id: 901, nicheId: 'sidehustle', title: 'Ide Gig Fiverr', content: 'Berdasarkan skill saya di bidang [Skill], berikan 5 ide layanan unik yang bisa saya jual di Fiverr dengan kompetisi rendah namun permintaan tinggi.', category: 'Freelance', isGem: false },
+            { id: 1001, nicheId: 'language', title: 'Partner Percakapan', content: 'Bertindaklah sebagai native speaker bahasa [Bahasa]. Ajak saya bercakap-cakap tentang topik [Topik]. Koreksi setiap kesalahan tata bahasa saya di akhir setiap respon.', category: 'Speaking', isGem: false },
+            
+            // CONTOH HIDDEN GEMS (PREMIUM)
+            { id: 9901, nicheId: 'business', title: 'The CEO Decision Framework', content: 'Ini adalah prompt premium tingkat lanjut. Bertindak sebagai CEO Fortune 500. Gunakan framework mental model "Second-Order Thinking" dan "Inversion" untuk menganalisis keputusan strategis ini: [Keputusan]. Berikan output dalam format memo eksekutif.', category: 'Executive', isGem: true },
+            { id: 9902, nicheId: 'creator', title: 'Algorithm Hacker Script', content: 'Prompt rahasia untuk menyusun skrip video berdurasi 60 detik dengan retensi audiens 90%. Struktur: Hook Visual (0-3s), Retensi Emosi (3-15s), Value Bomb (15-45s), CTA Spesifik (45-60s). Topik: [Topik].', category: 'Growth Hack', isGem: true }
+        ];
+
+        // ==========================================
+        // COMPONENTS
+        // ==========================================
+
+        const Header = ({ darkMode, setDarkMode, setView }) => (
+            <header className="sticky top-0 z-50 glass border-b border-gray-200 dark:border-slate-800 transition-colors">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                    <div 
+                        className="flex items-center gap-3 cursor-pointer group"
+                        onClick={() => setView('home')}
+                    >
+                        <div className="bg-gradient-to-br from-blue-600 to-purple-600 p-2 rounded-xl text-white shadow-lg group-hover:scale-105 transition-transform">
+                            <BrainCircuit size={28} />
+                        </div>
+                        <div>
+                            <h1 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 tracking-tight">
+                                PromptLibrary
+                            </h1>
+                            <p className="hidden md:block text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                Ribuan strategi AI profesional
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onClick={() => setDarkMode(!darkMode)}
+                        className="p-2.5 rounded-full bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        aria-label="Toggle Dark Mode"
+                    >
+                        {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                </div>
+            </header>
+        );
+
+        const ModalPreview = ({ prompt, onClose }) => {
+            if (!prompt) return null;
+            
+            const handleCopy = () => {
+                navigator.clipboard.writeText(prompt.content);
+                alert('Prompt berhasil disalin!');
+            };
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+                    <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-200 dark:border-slate-700 overflow-hidden animate-slide-up" onClick={e => e.stopPropagation()}>
+                        <div className={`h-2 w-full bg-gradient-to-r ${prompt.isGem ? 'from-amber-400 to-yellow-600' : 'from-blue-500 to-purple-600'}`}></div>
+                        <div className="p-6 md:p-8">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <span className={`inline-block px-2 py-1 rounded text-xs font-bold mb-2 uppercase tracking-wide ${
+                                        prompt.isGem 
+                                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400' 
+                                        : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                    }`}>
+                                        {prompt.category}
+                                    </span>
+                                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{prompt.title}</h2>
+                                    {prompt.isGem && <div className="flex items-center gap-1 text-amber-500 text-sm font-medium"><Star size={14} fill="currentColor"/> Premium Hidden Gem</div>}
+                                </div>
+                                <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                    ✕
+                                </button>
+                            </div>
+                            
+                            <div className="bg-gray-50 dark:bg-slate-950 p-4 rounded-xl border border-gray-200 dark:border-slate-800 mb-6 font-mono text-sm md:text-base text-gray-700 dark:text-gray-300 max-h-[60vh] overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                                {prompt.content}
+                            </div>
+
+                            <div className="flex gap-3 justify-end">
+                                <button 
+                                    onClick={onClose}
+                                    className="px-4 py-2 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                                >
+                                    Tutup
+                                </button>
+                                <button 
+                                    onClick={handleCopy}
+                                    className={`flex items-center gap-2 px-5 py-2 rounded-lg font-medium text-white shadow-lg transition-transform active:scale-95 ${
+                                        prompt.isGem ? 'bg-gradient-to-r from-amber-500 to-yellow-600 hover:shadow-amber-500/20' : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-blue-500/20'
+                                    }`}
+                                >
+                                    <Copy size={18} /> Salin Prompt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const PromptCard = ({ item, index, onPreview, isFavorite, toggleFavorite }) => {
+            const isGem = item.isGem;
+
+            const copyToClipboard = (e) => {
+                e.stopPropagation();
+                navigator.clipboard.writeText(item.content);
+                // In a real app, show a toast here
+            };
+
+            return (
+                <div className={`group relative flex flex-col justify-between rounded-xl border transition-all duration-300 hover:-translate-y-1 ${
+                    isGem 
+                    ? 'bg-slate-900 border-amber-500/30 hover:border-amber-400/60 shadow-lg shadow-amber-900/10' 
+                    : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 hover:shadow-xl dark:hover:shadow-slate-900/50'
+                }`}>
+                    {/* Header Card */}
+                    <div className="p-5">
+                        <div className="flex justify-between items-start mb-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-mono text-gray-400 dark:text-slate-500">#{String(item.id).padStart(3, '0')}</span>
+                                <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
+                                    isGem 
+                                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                                    : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                }`}>
+                                    {item.category}
+                                </span>
+                            </div>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }}
+                                className={`transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-gray-300 dark:text-slate-600 hover:text-red-400'}`}
+                            >
+                                <Star size={18} className={isFavorite ? "fill-current" : ""} />
+                            </button>
+                        </div>
+                        
+                        <h3 className={`font-bold text-lg mb-2 line-clamp-2 ${isGem ? 'text-white' : 'text-gray-800 dark:text-white'}`}>
+                            {item.title}
+                        </h3>
+                        
+                        <p className={`text-sm line-clamp-3 mb-4 ${isGem ? 'text-slate-400' : 'text-gray-600 dark:text-slate-300'}`}>
+                            {item.content}
+                        </p>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className={`p-4 border-t flex gap-2 ${isGem ? 'border-amber-500/10 bg-slate-950/30' : 'border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50'} rounded-b-xl`}>
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); onPreview(item); }}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                isGem 
+                                ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' 
+                                : 'bg-white dark:bg-slate-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600'
+                            }`}
+                        >
+                            <Eye size={16} /> Preview
+                        </button>
+                        <button 
+                            onClick={copyToClipboard}
+                            className={`p-2 rounded-lg transition-colors ${
+                                isGem 
+                                ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' 
+                                : 'bg-blue-600 text-white hover:bg-blue-700'
+                            }`}
+                            title="Salin Cepat"
+                        >
+                            <Copy size={16} />
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const NicheCard = ({ niche, onClick }) => (
+            <div 
+                onClick={() => onClick(niche.id)}
+                className="group cursor-pointer bg-white dark:bg-slate-800 rounded-2xl p-6 border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden relative"
+            >
+                <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${niche.color}`}></div>
+                <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full opacity-10 blur-xl bg-gradient-to-br ${niche.color} group-hover:opacity-20 transition-opacity`}></div>
+                
+                <div className="flex items-start justify-between mb-4">
+                    <div className="text-4xl filter drop-shadow-sm">{niche.icon}</div>
+                    <div className="p-2 rounded-full bg-gray-50 dark:bg-slate-700 group-hover:bg-blue-50 dark:group-hover:bg-slate-600 transition-colors">
+                        <ChevronLeft size={20} className="rotate-180 text-gray-400 group-hover:text-blue-500" />
+                    </div>
+                </div>
+                
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    {niche.title}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-slate-400">
+                    {niche.desc}
+                </p>
+            </div>
+        );
+
+        // ==========================================
+        // MAIN APP LOGIC
+        // ==========================================
+
+        const App = () => {
+            const [darkMode, setDarkMode] = useState(false);
+            const [view, setView] = useState('home'); // home | library
+            const [selectedNicheId, setSelectedNicheId] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [favorites, setFavorites] = useState([]);
+            const [activeTab, setActiveTab] = useState('standard'); // standard | gem
+            const [previewItem, setPreviewItem] = useState(null);
+
+            // Initialize Dark Mode & Favorites
+            useEffect(() => {
+                const savedFavs = localStorage.getItem('promptFavs');
+                if (savedFavs) setFavorites(JSON.parse(savedFavs));
+                
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    setDarkMode(true);
+                }
+            }, []);
+
+            useEffect(() => {
+                if (darkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }, [darkMode]);
+
+            // Save Favorites
+            const toggleFavorite = (id) => {
+                let newFavs;
+                if (favorites.includes(id)) {
+                    newFavs = favorites.filter(favId => favId !== id);
+                } else {
+                    newFavs = [...favorites, id];
+                }
+                setFavorites(newFavs);
+                localStorage.setItem('promptFavs', JSON.stringify(newFavs));
+            };
+
+            // Navigation Handlers
+            const handleNicheClick = (id) => {
+                setSelectedNicheId(id);
+                setView('library');
+                setActiveTab(id === 'hiddengems' ? 'gem' : 'standard');
+                window.scrollTo(0, 0);
+            };
+
+            const goHome = () => {
+                setView('home');
+                setSelectedNicheId(null);
+                setSearchQuery('');
+            };
+
+            // Filter Logic
+            const filteredPrompts = useMemo(() => {
+                if (view !== 'library') return [];
+
+                let data = INITIAL_DATA;
+
+                // 1. Filter by Niche (unless it's global Hidden Gems access)
+                if (selectedNicheId !== 'hiddengems') {
+                    data = data.filter(item => item.nicheId === selectedNicheId);
+                } else {
+                    // If viewing Global Hidden Gems, only show gems from all niches
+                    data = data.filter(item => item.isGem);
+                }
+
+                // 2. Filter by Tab (Standard vs Gem) - Only applies inside a specific Niche
+                if (selectedNicheId !== 'hiddengems') {
+                    if (activeTab === 'standard') {
+                        data = data.filter(item => !item.isGem);
+                    } else {
+                        data = data.filter(item => item.isGem);
+                    }
+                }
+
+                // 3. Search Filter
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    data = data.filter(item => 
+                        item.title.toLowerCase().includes(query) || 
+                        item.content.toLowerCase().includes(query) ||
+                        item.category.toLowerCase().includes(query)
+                    );
+                }
+
+                return data;
+            }, [view, selectedNicheId, activeTab, searchQuery]);
+
+            const currentNiche = NICHES.find(n => n.id === selectedNicheId);
+
+            // ==========================================
+            // RENDER
+            // ==========================================
+            
+            return (
+                <div className="min-h-screen flex flex-col font-sans">
+                    <Header darkMode={darkMode} setDarkMode={setDarkMode} setView={goHome} />
+
+                    <main className="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        
+                        {/* HOME VIEW */}
+                        {view === 'home' && (
+                            <div className="animate-fade-in space-y-12">
+                                {/* Hero Section */}
+                                <div className="text-center max-w-3xl mx-auto py-8">
+                                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+                                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+                                            Perpustakaan Ribuan Prompt
+                                        </span>
+                                    </h1>
+                                    <p className="text-xl text-gray-600 dark:text-gray-300">
+                                        Ribuan strategi AI siap pakai untuk produktivitas profesional.
+                                        Tingkatkan karir dan bisnis Anda dalam hitungan detik.
+                                    </p>
+                                </div>
+
+                                {/* Niche Grid */}
+                                <div>
+                                    <div className="flex items-center gap-2 mb-6">
+                                        <BookOpen className="text-blue-600" size={24} />
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Pilih Kategori Niche</h2>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                        {NICHES.map(niche => (
+                                            <NicheCard key={niche.id} niche={niche} onClick={handleNicheClick} />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Hidden Gems Teaser (Bottom Section) */}
+                                <div className="mt-16 pt-8 border-t border-gray-200 dark:border-slate-800">
+                                    <div 
+                                        onClick={() => handleNicheClick('hiddengems')}
+                                        className="relative overflow-hidden cursor-pointer group rounded-2xl border border-amber-500/30 bg-slate-900 p-8 md:p-12 text-center transition-all hover:shadow-[0_0_40px_rgba(251,191,36,0.2)]"
+                                    >
+                                        {/* Background Effects */}
+                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                        <div className="absolute -top-20 -right-20 w-64 h-64 bg-amber-500/20 rounded-full blur-3xl"></div>
+                                        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
+
+                                        <div className="relative z-10 flex flex-col items-center">
+                                            <div className="mb-4 p-3 rounded-full bg-gradient-to-br from-amber-400 to-yellow-600 text-slate-900 shadow-lg shadow-amber-500/20">
+                                                <Lock size={32} />
+                                            </div>
+                                            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 font-serif tracking-wide">
+                                                The Hidden Gems <span className="text-amber-400">Collection</span>
+                                            </h2>
+                                            <p className="text-slate-300 max-w-xl mx-auto mb-8 text-lg">
+                                                Akses kumpulan prompt rahasia level eksekutif yang tidak dibagikan secara umum. Strategi high-leverage untuk hasil maksimal.
+                                            </p>
+                                            <button className="px-8 py-3 rounded-full bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-900 font-bold hover:scale-105 transition-transform shadow-lg flex items-center gap-2">
+                                                Buka Kunci Sekarang <Zap size={20} className="fill-slate-900" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* LIBRARY VIEW */}
+                        {view === 'library' && (
+                            <div className="animate-slide-up">
+                                {/* Navigation & Search Bar */}
+                                <div className="flex flex-col md:flex-row gap-4 mb-8 justify-between md:items-center">
+                                    <button 
+                                        onClick={goHome}
+                                        className="self-start flex items-center gap-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 transition-colors"
+                                    >
+                                        <div className="p-2 rounded-full bg-white dark:bg-slate-800 border dark:border-slate-700 shadow-sm">
+                                            <ChevronLeft size={20} />
+                                        </div>
+                                        <span className="font-medium">Kembali ke Home</span>
+                                    </button>
+
+                                    <div className="relative w-full md:w-96">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                                        <input 
+                                            type="text"
+                                            placeholder="Cari prompt, kategori, atau kata kunci..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow shadow-sm text-gray-900 dark:text-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Header Library Niche */}
+                                <div className="mb-8">
+                                    {selectedNicheId === 'hiddengems' ? (
+                                        <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 to-slate-800 border border-amber-500/30 text-white shadow-xl relative overflow-hidden">
+                                            <div className="relative z-10">
+                                                <h2 className="text-3xl font-bold flex items-center gap-3 text-amber-400 mb-2">
+                                                    <Lock size={28} /> Hidden Gems Vault
+                                                </h2>
+                                                <p className="text-slate-300">Koleksi prompt premium lintas kategori.</p>
+                                            </div>
+                                            <div className="absolute right-0 top-0 w-64 h-full bg-gradient-to-l from-amber-500/10 to-transparent"></div>
+                                        </div>
+                                    ) : (
+                                        <div className={`p-6 rounded-2xl bg-gradient-to-r ${currentNiche?.color} text-white shadow-lg`}>
+                                            <h2 className="text-3xl font-bold flex items-center gap-3 mb-2">
+                                                <span className="text-4xl">{currentNiche?.icon}</span> {currentNiche?.title}
+                                            </h2>
+                                            <p className="text-white/90">{currentNiche?.desc}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Tabs Logic (Hidden for 'hiddengems' view because that view is ALL gems) */}
+                                {selectedNicheId !== 'hiddengems' && (
+                                    <div className="flex gap-4 mb-6 border-b border-gray-200 dark:border-slate-800">
+                                        <button 
+                                            onClick={() => setActiveTab('standard')}
+                                            className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 transition-all relative ${
+                                                activeTab === 'standard' 
+                                                ? 'text-blue-600 dark:text-blue-400' 
+                                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                                            }`}
+                                        >
+                                            Koleksi Standar
+                                            {activeTab === 'standard' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 dark:bg-blue-400 rounded-t-full"></span>}
+                                        </button>
+                                        <button 
+                                            onClick={() => setActiveTab('gem')}
+                                            className={`pb-3 px-4 text-sm font-bold flex items-center gap-2 transition-all relative ${
+                                                activeTab === 'gem' 
+                                                ? 'text-amber-500' 
+                                                : 'text-gray-500 hover:text-amber-500/70 dark:text-gray-400'
+                                            }`}
+                                        >
+                                            <Star size={14} className={activeTab === 'gem' ? "fill-current" : ""} /> Hidden Gems
+                                            {activeTab === 'gem' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-amber-500 rounded-t-full"></span>}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Prompt Grid */}
+                                {filteredPrompts.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-12">
+                                        {filteredPrompts.map((item, index) => (
+                                            <PromptCard 
+                                                key={item.id} 
+                                                item={item} 
+                                                index={index}
+                                                onPreview={setPreviewItem}
+                                                isFavorite={favorites.includes(item.id)}
+                                                toggleFavorite={toggleFavorite}
+                                            />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-gray-300 dark:border-slate-700">
+                                        <div className="inline-block p-4 rounded-full bg-gray-100 dark:bg-slate-700 mb-4">
+                                            <Search className="text-gray-400" size={32} />
+                                        </div>
+                                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">Tidak ada prompt ditemukan</h3>
+                                        <p className="text-gray-500 dark:text-gray-400">Coba ubah kata kunci pencarian atau ganti tab kategori.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="bg-white dark:bg-slate-900 border-t border-gray-200 dark:border-slate-800 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                        <p>&copy; 2024 Perpustakaan Ribuan Prompt. All rights reserved.</p>
+                    </footer>
+
+                    {/* Modal */}
+                    <ModalPreview prompt={previewItem} onClose={() => setPreviewItem(null)} />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
+
